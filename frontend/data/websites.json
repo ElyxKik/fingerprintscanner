@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "description": "Curated public website catalog. Entries are displayed as informational sources; they are not proof that the scanned email is present on the site.",
+  "danger_keywords": {
+    "critical": [
+      "credential leak",
+      "password dump",
+      "data breach",
+      "identity theft",
+      "financial fraud",
+      "social security number",
+      "national id",
+      "passport number"
+    ],
+    "high": [
+      "people search",
+      "data broker",
+      "home address",
+      "phone number",
+      "contact details",
+      "background check",
+      "public records",
+      "doxxing"
+    ],
+    "medium": [
+      "email exposure",
+      "directory listing",
+      "public profile",
+      "marketing database",
+      "search result",
+      "cached page"
+    ],
+    "low": [
+      "professional profile",
+      "social profile",
+      "forum account",
+      "developer profile"
+    ]
+  },
+  "sites": [
+    {
+      "name": "Have I Been Pwned",
+      "url": "https://haveibeenpwned.com/",
+      "category": "Breach checker",
+      "keywords": [
+        "data breach",
+        "credential leak"
+      ],
+      "removal_url": "https://haveibeenpwned.com/FAQs"
+    },
+    {
+      "name": "Google Results",
+      "url": "https://www.google.com/search?q=",
+      "category": "Search engine",
+      "keywords": [
+        "search result",
+        "cached page"
+      ],
+      "removal_url": "https://support.google.com/websearch/answer/9673730"
+    },
+    {
+      "name": "Bing Results",
+      "url": "https://www.bing.com/search?q=",
+      "category": "Search engine",
+      "keywords": [
+        "search result",
+        "cached page"
+      ],
+      "removal_url": "https://www.microsoft.com/en-us/concern/bing"
+    },
+    {
+      "name": "Whitepages",
+      "url": "https://www.whitepages.com/",
+      "category": "People search",
+      "keywords": [
+        "home address",
+        "phone number",
+        "public records"
+      ],
+      "removal_url": "https://www.whitepages.com/suppression-requests"
+    },
+    {
+      "name": "Spokeo",
+      "url": "https://www.spokeo.com/",
+      "category": "People search",
+      "keywords": [
+        "home address",
+        "phone number",
+        "data broker"
+      ],
+      "removal_url": "https://www.spokeo.com/optout"
+    },
+    {
+      "name": "BeenVerified",
+      "url": "https://www.beenverified.com/",
+      "category": "People search",
+      "keywords": [
+        "background check",
+        "public records",
+        "contact details"
+      ],
+      "removal_url": "https://www.beenverified.com/faq/opt-out/"
+    },
+    {
+      "name": "That’s Them",
+      "url": "https://thatsthem.com/",
+      "category": "People search",
+      "keywords": [
+        "home address",
+        "phone number"
+      ],
+      "removal_url": "https://thatsthem.com/optout"
+    },
+    {
+      "name": "LinkedIn",
+      "url": "https://www.linkedin.com/",
+      "category": "Professional profile",
+      "keywords": [
+        "professional profile",
+        "public profile"
+      ],
+      "removal_url": "https://www.linkedin.com/help/linkedin/answer/a1336653"
+    },
+    {
+      "name": "Facebook",
+      "url": "https://www.facebook.com/",
+      "category": "Social profile",
+      "keywords": [
+        "social profile",
+        "public profile"
+      ],
+      "removal_url": "https://www.facebook.com/help/212802592074644"
+    },
+    {
+      "name": "GitHub",
+      "url": "https://github.com/",
+      "category": "Developer profile",
+      "keywords": [
+        "developer profile",
+        "public profile"
+      ],
+      "removal_url": "https://docs.github.com/en/site-policy/content-removal-policies"
+    }
+  ]
+}

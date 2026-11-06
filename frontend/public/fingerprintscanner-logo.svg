@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="478" height="80" viewBox="0 0 478 80" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">FingerprintScanner</title>
+  <desc id="desc">Empreinte digitale stylisée dans un carré bleu dégradé, suivie du nom FingerprintScanner.</desc>
+  <defs>
+    <linearGradient id="brand" x1="8" y1="8" x2="72" y2="72" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#38BDF8"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="64" height="64" rx="19" fill="url(#brand)"/>
+  <g stroke="#fff" stroke-linecap="round" stroke-width="3.25">
+    <path d="M40 20c-11 0-20 9-20 20 0 5.2-.7 9.9-2.2 14"/>
+    <path d="M40 26c-7.7 0-14 6.3-14 14 0 7.4-1.1 13.7-3.5 19"/>
+    <path d="M40 32c-4.4 0-8 3.6-8 8 0 8.9-1.8 16.4-5.4 23"/>
+    <path d="M40 20c11 0 20 9 20 20 0 4.3.5 8.2 1.5 11.9"/>
+    <path d="M40 26c7.7 0 14 6.3 14 14 0 6.5.7 12 2.2 16.5"/>
+    <path d="M40 32c4.4 0 8 3.6 8 8 0 8.1 1.2 14.8 3.6 20"/>
+    <path d="M40 40v3"/>
+  </g>
+  <circle cx="59" cy="20" r="5" fill="#BAF2FF" stroke="#2563EB" stroke-width="2"/>
+  <text x="91" y="51" fill="#111827" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" letter-spacing="-1.5">Fingerprint</text>
+  <text x="270" y="51" fill="#2563EB" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="600" letter-spacing="-1.5">Scanner</text>
+</svg>
