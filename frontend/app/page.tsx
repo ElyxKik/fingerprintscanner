@@ -208,9 +208,15 @@ export default function Home() {
   }
 
   useEffect(() => {
-    if (!scanOnly || autoScanStarted.current) return;
+    if (autoScanStarted.current) return;
     const requestedEmail = new URLSearchParams(window.location.search).get('email')?.trim() || '';
     if (!requestedEmail) return;
+    if (!scanOnly && window.location.pathname === '/') {
+      autoScanStarted.current = true;
+      window.location.replace(`/scan?email=${encodeURIComponent(requestedEmail)}`);
+      return;
+    }
+    if (!scanOnly) return;
     autoScanStarted.current = true;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(requestedEmail)) {
       setEmail(requestedEmail);
