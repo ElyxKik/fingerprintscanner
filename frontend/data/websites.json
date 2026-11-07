@@ -39,6 +39,26 @@
   },
   "sites": [
     {
+      "name": "XVIDOEOS",
+      "url": "https://xvideos.com/",
+      "category": "Breach checker",
+      "keywords": [
+        "data breach",
+        "credential leak"
+      ],
+      "removal_url": "#"
+    },
+    {
+      "name": "PEDO PORN",
+      "url": "https://pedoporn.com/",
+      "category": "Breach checker",
+      "keywords": [
+        "data breach",
+        "credential leak"
+      ],
+      "removal_url": "https://pedocc.com/FAQs"
+    },
+    {
       "name": "Have I Been Pwned",
       "url": "https://haveibeenpwned.com/",
       "category": "Breach checker",
