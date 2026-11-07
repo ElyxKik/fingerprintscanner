@@ -127,6 +127,9 @@ body{font-size:16px;line-height:1.55}
 .selection-cleanup-actions p{font-size:13px;line-height:1.5}
 .selection-cleanup-actions .button{font-size:12px;min-height:42px}
 .scan-pricing-link{font-size:13px}
+.scan-offer-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:18px;padding:16px;border:1px solid #dbeafe;border-radius:10px;background:#f5f9ff}
+.scan-offer-actions p{flex-basis:100%;margin:0;color:#334155;font-size:13px;line-height:1.5}
+.scan-offer-actions .button{min-height:44px}
 .results-lock-card b{font-size:15px}
 .results-lock-card p{font-size:13px;line-height:1.5}
 .results-lock-card .button{font-size:12px;min-height:42px}

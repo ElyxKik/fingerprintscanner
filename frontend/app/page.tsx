@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
@@ -82,6 +82,7 @@ function orderAmountLabel(order: { currency?: string; amount_usd?: number; amoun
 
 export default function Home() {
   const scanOnly = usePathname() === '/scan';
+  const autoScanStarted = useRef(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [consent, setConsent] = useState(false);
@@ -159,15 +160,13 @@ export default function Home() {
       .catch(() => undefined);
   }, []);
 
-  function startScan(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setError('');
-    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('Saisissez une adresse e-mail valide pour continuer.'); return; }
-    if (!consent) { setError('Veuillez confirmer que cette adresse e-mail vous appartient.'); return; }
+  function launchScan(address: string) {
+    setError('');
     setStage('scanning'); setScanNotice(''); setResults([]); setSelectedFindingIds([]); localStorage.removeItem('fingerprintscanner_selected_findings'); setError(''); setScanId(''); setPendingScanId(''); setDashboard(null); setCleanupDrafts([]);
     const apiBase = '/api';
     const verifiedEmail = localStorage.getItem('fingerprintscanner_verified_email');
-    const hasMatchingVerifiedSession = Boolean(authToken && verifiedEmail?.toLowerCase() === email.trim().toLowerCase());
-    fetch(`${apiBase}/scans`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(hasMatchingVerifiedSession ? { Authorization: `Bearer ${authToken}` } : {}) }, body: JSON.stringify({ email: email.trim(), ownership_confirmed: true }) })
+    const hasMatchingVerifiedSession = Boolean(authToken && verifiedEmail?.toLowerCase() === address.toLowerCase());
+    fetch(`${apiBase}/scans`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(hasMatchingVerifiedSession ? { Authorization: `Bearer ${authToken}` } : {}) }, body: JSON.stringify({ email: address, ownership_confirmed: true }) })
       .then(async response => { if (!response.ok) throw new Error('Le service d’analyse est indisponible'); return response.json(); })
       .then(async scan => {
         const scanId = scan.id as string;
@@ -199,6 +198,29 @@ export default function Home() {
       })
       .catch((cause: Error) => { setError(`${cause.message}. Vérifiez la configuration de la base de données et du fournisseur de recherche.`); setStage('error'); });
   }
+
+  function startScan(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const address = email.trim();
+    if (!address || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) { setError('Saisissez une adresse e-mail valide pour continuer.'); return; }
+    if (!consent) { setError('Veuillez confirmer que cette adresse e-mail vous appartient.'); return; }
+    launchScan(address);
+  }
+
+  useEffect(() => {
+    if (!scanOnly || autoScanStarted.current) return;
+    const requestedEmail = new URLSearchParams(window.location.search).get('email')?.trim() || '';
+    if (!requestedEmail) return;
+    autoScanStarted.current = true;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(requestedEmail)) {
+      setEmail(requestedEmail);
+      setError('Le lien contient une adresse e-mail invalide. Corrigez-la puis relancez l’analyse.');
+      return;
+    }
+    setEmail(requestedEmail);
+    setConsent(true);
+    launchScan(requestedEmail);
+  }, [scanOnly]);
 
   async function createCleanupDraft(findingId: string) {
     if (!authToken) { setError('Connectez-vous avec l’adresse analysée avant de préparer une demande de suppression.'); return; }
@@ -310,7 +332,7 @@ export default function Home() {
             ) : stage === 'scanning' ? (
               <div className="scan-progress-card"><div className="scan-progress-icon"><ScanSearch size={22} /></div><h3>Recherche dans les sources publiques</h3><p>Consultation des résultats du Web et classement du niveau d’exposition…</p><div className="progress-track"><motion.span initial={{ width: '7%' }} animate={{ width: '88%' }} transition={{ duration: 12, ease: 'linear' }} /></div><div className="scan-progress-meta"><span><i /> Analyse en cours</span><span>{email}</span></div></div>
             ) : (
-              <div className="scan-result-summary"><div className="results-top"><span className="result-check"><Check size={18} /></span><div><h3>Votre analyse gratuite est terminée</h3><p>{results.length ? hasFullResultsAccess ? `${results.length} résultats affichés : ${results.filter(r => r.kind === 'demo').length} exemples fictifs, ${results.filter(r => r.kind === 'catalog').length} sites du catalogue${results.some(r => r.kind === 'live') ? ` et ${results.filter(r => r.kind === 'live').length} résultats du scan` : ''}.` : `Aperçu gratuit : 5 résultats affichés sur ${results.length}. Connectez-vous ou choisissez une offre pour voir le reste.` : 'Aucune source n’a été renvoyée pour cette analyse.'}</p></div><button className="reset-button" onClick={() => { setStage('idle'); setResults([]); setSelectedIds([]); setScanNotice(''); }}>Nouvelle analyse</button></div>{hasFullResultsAccess && <div className="scan-selection-bar"><label><input type="checkbox" checked={allRealResultsSelected} disabled={!cleanableResults.length} onChange={event => setSelectedIds(event.target.checked ? cleanableResults.map(result => result.id!) : [])} /><span>Sélectionner tous les résultats réels</span></label><span>{selectedCount} sélectionné(s) sur {cleanableResults.length} lien(s) nettoyable(s)</span><small>Les exemples fictifs et les sites du catalogue ne sont pas sélectionnables.</small></div>}<div className="results-list">{results.map((r, i) => { const isLocked = !hasFullResultsAccess && i >= 5; return <Fragment key={`${r.site}-${i}`}>{i === 5 && !hasFullResultsAccess && lockedResultsCount > 0 && <div className="results-lock-card"><span className="lock-icon"><LockKeyhole size={18}/></span><div><b>{lockedResultsCount} autres sites sont masqués</b><p>Connectez-vous ou consultez les offres pour débloquer tous les résultats.</p></div><button type="button" className="button button-outline" onClick={() => setAuthModalMode('login')}>Se connecter</button><a href="/#pricing" className="button button-primary">Voir les offres</a></div>}<div className={`result-row ${isLocked ? 'result-row-locked' : ''}`}><label className="result-select" aria-label={`Sélectionner ${r.site}`}><input type="checkbox" checked={Boolean(r.id && selectedFindingIds.includes(r.id))} disabled={isLocked || r.kind !== 'live' || !r.id} onChange={event => r.id && toggleFindingSelection(r.id, event.target.checked)} /><span /></label><span className="result-bullet">{i + 1}</span><span className="result-details"><b>{r.site}</b><small>{r.url} · {r.type}</small></span><span className={`risk risk-${r.color}`}>{({critical:'Critique',high:'Élevé',medium:'Modéré',low:'Faible'} as Record<string,string>)[r.risk] || r.risk} · {r.score ?? 0}</span>{(r.kind === 'catalog' || r.kind === 'demo') && <span className="catalog-tag">{r.kind === 'demo' ? 'Fictif · exemple' : 'Catalogue · présence non confirmée'}</span>}{r.keywords?.length ? <small className="matched-keywords">Mots-clés détectés : {r.keywords.join(', ')}</small> : null}{r.removalUrl && r.kind !== 'demo' && <a className="result-action" href={r.removalUrl} target="_blank" rel="noreferrer">Infos de suppression</a>}{r.id && r.kind === 'live' && <button className="result-action" onClick={() => createCleanupDraft(r.id!)}>Préparer une demande</button>}</div></Fragment>})}</div>{cleanupDrafts.map(d => <div className="draft-panel" key={d.id}><b>Brouillon de demande de suppression · {d.status}</b><textarea value={d.request_text} onChange={e => setCleanupDrafts(items => items.map(item => item.id === d.id ? { ...item, request_text: e.target.value } : item))} /><button className="button button-outline" onClick={() => navigator.clipboard.writeText(d.request_text)}>Copier le brouillon</button><button className="button button-primary" onClick={() => approveDraft(d.id)}>Je valide ce brouillon</button></div>)}{scanNotice && <div className="demo-notice">{scanNotice}</div>}<p className="results-disclaimer">Les résultats marqués « Fictif » sont des exemples. Les sources du catalogue sont indicatives : elles ne confirment pas la présence de votre adresse.</p>{error && <p className="form-error">{error}</p>}{hasFullResultsAccess && <div className="selection-cleanup-actions"><p>{selectedCount ? `${selectedCount} lien(s) réel(s) sélectionné(s). Décochez ceux que vous ne souhaitez pas nettoyer.` : 'Cochez un ou plusieurs résultats réels pour choisir les liens à nettoyer.'}</p><button className="button button-outline" disabled={selectedCount !== 1} onClick={() => createOrder('guided')}>Nettoyer 1 lien · 199 $ / an</button><button className="button button-primary" disabled={selectedCount < 1 || selectedCount > 5} onClick={() => createOrder('complete')}>Nettoyer la sélection · 299 $ / an</button></div>}<a href="/#pricing" className="text-link scan-pricing-link">Consulter le détail des offres <ArrowRight size={16} /></a></div>
+              <div className="scan-result-summary"><div className="results-top"><span className="result-check"><Check size={18} /></span><div><h3>Votre analyse gratuite est terminée</h3><p>{results.length ? hasFullResultsAccess ? `${results.length} résultats affichés : ${results.filter(r => r.kind === 'demo').length} exemples fictifs, ${results.filter(r => r.kind === 'catalog').length} sites du catalogue${results.some(r => r.kind === 'live') ? ` et ${results.filter(r => r.kind === 'live').length} résultats du scan` : ''}.` : `Aperçu gratuit : 5 résultats affichés sur ${results.length}. Connectez-vous ou choisissez une offre pour voir le reste.` : 'Aucune source n’a été renvoyée pour cette analyse.'}</p></div><button className="reset-button" onClick={() => { setStage('idle'); setResults([]); setSelectedIds([]); setScanNotice(''); }}>Nouvelle analyse</button></div>{hasFullResultsAccess && <div className="scan-selection-bar"><label><input type="checkbox" checked={allRealResultsSelected} disabled={!cleanableResults.length} onChange={event => setSelectedIds(event.target.checked ? cleanableResults.map(result => result.id!) : [])} /><span>Sélectionner tous les résultats réels</span></label><span>{selectedCount} sélectionné(s) sur {cleanableResults.length} lien(s) nettoyable(s)</span><small>Les exemples fictifs et les sites du catalogue ne sont pas sélectionnables.</small></div>}<div className="results-list">{results.map((r, i) => { const isLocked = !hasFullResultsAccess && i >= 5; return <Fragment key={`${r.site}-${i}`}>{i === 5 && !hasFullResultsAccess && lockedResultsCount > 0 && <div className="results-lock-card"><span className="lock-icon"><LockKeyhole size={18}/></span><div><b>{lockedResultsCount} autres sites sont masqués</b><p>Connectez-vous ou consultez les offres pour débloquer tous les résultats.</p></div><button type="button" className="button button-outline" onClick={() => setAuthModalMode('login')}>Se connecter</button><a href="/#pricing" className="button button-primary">Voir les offres</a></div>}<div className={`result-row ${isLocked ? 'result-row-locked' : ''}`}><label className="result-select" aria-label={`Sélectionner ${r.site}`}><input type="checkbox" checked={Boolean(r.id && selectedFindingIds.includes(r.id))} disabled={isLocked || r.kind !== 'live' || !r.id} onChange={event => r.id && toggleFindingSelection(r.id, event.target.checked)} /><span /></label><span className="result-bullet">{i + 1}</span><span className="result-details"><b>{r.site}</b><small>{r.url} · {r.type}</small></span><span className={`risk risk-${r.color}`}>{({critical:'Critique',high:'Élevé',medium:'Modéré',low:'Faible'} as Record<string,string>)[r.risk] || r.risk} · {r.score ?? 0}</span>{(r.kind === 'catalog' || r.kind === 'demo') && <span className="catalog-tag">{r.kind === 'demo' ? 'Fictif · exemple' : 'Catalogue · présence non confirmée'}</span>}{r.keywords?.length ? <small className="matched-keywords">Mots-clés détectés : {r.keywords.join(', ')}</small> : null}{r.removalUrl && r.kind !== 'demo' && <a className="result-action" href={r.removalUrl} target="_blank" rel="noreferrer">Infos de suppression</a>}{r.id && r.kind === 'live' && <button className="result-action" onClick={() => createCleanupDraft(r.id!)}>Préparer une demande</button>}</div></Fragment>})}</div>{cleanupDrafts.map(d => <div className="draft-panel" key={d.id}><b>Brouillon de demande de suppression · {d.status}</b><textarea value={d.request_text} onChange={e => setCleanupDrafts(items => items.map(item => item.id === d.id ? { ...item, request_text: e.target.value } : item))} /><button className="button button-outline" onClick={() => navigator.clipboard.writeText(d.request_text)}>Copier le brouillon</button><button className="button button-primary" onClick={() => approveDraft(d.id)}>Je valide ce brouillon</button></div>)}{scanNotice && <div className="demo-notice">{scanNotice}</div>}<p className="results-disclaimer">Les résultats marqués « Fictif » sont des exemples. Les sources du catalogue sont indicatives : elles ne confirment pas la présence de votre adresse.</p>{error && <p className="form-error">{error}</p>}{hasFullResultsAccess && <div className="selection-cleanup-actions"><p>{selectedCount ? `${selectedCount} lien(s) réel(s) sélectionné(s). Décochez ceux que vous ne souhaitez pas nettoyer.` : 'Cochez un ou plusieurs résultats réels pour choisir les liens à nettoyer.'}</p><button className="button button-outline" disabled={selectedCount !== 1} onClick={() => createOrder('guided')}>Nettoyer 1 lien · 199 $ / an</button><button className="button button-primary" disabled={selectedCount < 1 || selectedCount > 5} onClick={() => createOrder('complete')}>Nettoyer la sélection · 299 $ / an</button></div>}<div className="scan-offer-actions"><p>Choisissez une offre de nettoyage. La sélection de résultats est facultative.</p><button type="button" className="button button-outline" onClick={() => createOrder('guided', true)}>Offre accompagnée · 199 $ / an</button><button type="button" className="button button-primary" onClick={() => createOrder('complete', true)}>Offre complète · 299 $ / an</button></div><a href="/#pricing" className="text-link scan-pricing-link">Consulter le détail des offres <ArrowRight size={16} /></a></div>
             )}
           </div>
         </div>
