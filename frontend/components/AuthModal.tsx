@@ -22,8 +22,6 @@ export default function AuthModal({
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
-  const [confirmation, setConfirmation] = useState('');
-  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -41,12 +39,7 @@ export default function AuthModal({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
-    setMessage('');
     const normalizedEmail = email.trim().toLowerCase();
-    if (mode === 'register' && password !== confirmation) {
-      setError('Les deux mots de passe ne correspondent pas.');
-      return;
-    }
     setLoading(true);
     try {
       const response = await fetch(`/api/auth/${mode === 'register' ? 'register' : 'login'}`, {
@@ -66,10 +59,7 @@ export default function AuthModal({
         onClose();
         return;
       }
-      setMessage(result.delivery_mode === 'email'
-        ? 'Compte créé. Consultez votre boîte mail pour confirmer votre adresse.'
-        : 'Compte créé. Ouvrez le lien de confirmation affiché dans le terminal de l’API.');
-      setMode('login');
+      throw new Error('La session n’a pas pu être ouverte. Réessayez.');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Une erreur est survenue. Réessayez.');
     } finally {
@@ -90,13 +80,11 @@ export default function AuthModal({
           <input id="modal-auth-email" type="email" autoComplete="email" required value={email} onChange={event => setEmail(event.target.value)} placeholder="vous@exemple.fr" />
           <label htmlFor="modal-auth-password">Mot de passe</label>
           <input id="modal-auth-password" type="password" autoComplete={mode === 'register' ? 'new-password' : 'current-password'} required minLength={8} maxLength={128} value={password} onChange={event => setPassword(event.target.value)} placeholder="8 caractères minimum" />
-          {mode === 'register' && <><label htmlFor="modal-auth-confirmation">Confirmer le mot de passe</label><input id="modal-auth-confirmation" type="password" autoComplete="new-password" required minLength={8} maxLength={128} value={confirmation} onChange={event => setConfirmation(event.target.value)} placeholder="Saisissez à nouveau le mot de passe" /></>}
           {error && <p className="auth-error" role="alert">{error}</p>}
-          {message && <p className="auth-message" role="status">{message}</p>}
           <button className="button button-primary auth-submit" disabled={loading} type="submit">{loading ? 'Veuillez patienter…' : mode === 'register' ? 'Créer mon compte' : 'Se connecter'} <ArrowRight size={16}/></button>
         </form>
-        <p className="auth-switch">{mode === 'register' ? 'Vous avez déjà un compte ?' : 'Pas encore de compte ?'} <button type="button" onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setError(''); setMessage(''); }}>{mode === 'register' ? 'Se connecter' : 'Créer un compte'}</button></p>
-        <p className="auth-privacy"><Fingerprint size={14}/> Vos données personnelles sont protégées. La confirmation de l’adresse est requise à l’inscription.</p>
+        <p className="auth-switch">{mode === 'register' ? 'Vous avez déjà un compte ?' : 'Pas encore de compte ?'} <button type="button" onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setError(''); }}>{mode === 'register' ? 'Se connecter' : 'Créer un compte'}</button></p>
+        <p className="auth-privacy"><Fingerprint size={14}/> Vos données personnelles sont protégées. Votre session s’ouvre dès la création du compte.</p>
       </motion.section>
     </motion.div>
   </AnimatePresence>;

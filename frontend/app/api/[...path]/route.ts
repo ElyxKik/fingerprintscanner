@@ -151,23 +151,19 @@ async function main(request: NextRequest, parts: string[]) {
     const email = asText(body.email).trim().toLowerCase();
     const password = asText(body.password);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 8 || password.length > 128) return fail('Adresse e-mail ou mot de passe invalide (8 caractères minimum).', 422);
-    if (process.env.NODE_ENV === 'production' && (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM || !process.env.PII_ENCRYPTION_KEY || !process.env.AUTH_SECRET)) return fail('La configuration de l’inscription est incomplète.', 503);
+    if (process.env.NODE_ENV === 'production' && (!process.env.PII_ENCRYPTION_KEY || !process.env.AUTH_SECRET)) return fail('La configuration de l’inscription est incomplète.', 503);
     const digest = emailDigest(email);
     let user = (await db.execute({ sql: 'SELECT id,password_hash,email_verified_at FROM users WHERE email_lookup_hash=?', args: [digest] })).rows[0] as unknown as { id: string; password_hash: string | null; email_verified_at: string | null } | undefined;
-    if (user?.password_hash && user.email_verified_at) return fail('Un compte existe déjà pour cette adresse. Connectez-vous.', 409);
+    if (user?.password_hash) return fail('Un compte existe déjà pour cette adresse. Connectez-vous.', 409);
     const encoded = await passwordHash(password);
+    const verifiedAt = nowIso();
     if (!user) {
-      user = { id: uuid(), password_hash: encoded, email_verified_at: null };
-      await db.execute({ sql: 'INSERT INTO users(id,email_ciphertext,email_lookup_hash,password_hash,created_at) VALUES(?,?,?,?,?)', args: [user.id, encryptEmail(email), digest, encoded, nowIso()] });
+      user = { id: uuid(), password_hash: encoded, email_verified_at: verifiedAt };
+      await db.execute({ sql: 'INSERT INTO users(id,email_ciphertext,email_lookup_hash,password_hash,email_verified_at,created_at) VALUES(?,?,?,?,?,?)', args: [user.id, encryptEmail(email), digest, encoded, verifiedAt, verifiedAt] });
     } else {
-      await db.execute({ sql: 'UPDATE users SET password_hash=? WHERE id=?', args: [encoded, user.id] });
+      await db.execute({ sql: 'UPDATE users SET password_hash=?,email_verified_at=COALESCE(email_verified_at,?) WHERE id=?', args: [encoded, verifiedAt, user.id] });
     }
-    const token = randomBytes(32).toString('base64url');
-    await db.execute({ sql: 'INSERT INTO access_tokens(id,user_id,token_hash,expires_at,created_at) VALUES(?,?,?,?,?)', args: [uuid(), user.id, hash(token), new Date(Date.now() + 3600_000).toISOString(), nowIso()] });
-    const verifyUrl = `${appOrigin()}/auth/verify?token=${token}`;
-    if (process.env.NODE_ENV === 'production') await sendVerificationEmail(email, verifyUrl);
-    else console.info(`FingerprintScanner email verification link (development only): ${verifyUrl}`);
-    return json({ status: 'verification_required', delivery_mode: process.env.NODE_ENV === 'production' ? 'email' : 'console' }, 202);
+    return json({ access_token: await createSession(db, user.id), token_type: 'bearer', user_id: user.id, scan_id: '' }, 201);
   }
 
   if (route === 'auth/login' && request.method === 'POST') {
@@ -177,7 +173,7 @@ async function main(request: NextRequest, parts: string[]) {
     if (!email || !password) return fail('Adresse e-mail ou mot de passe incorrect', 401);
     const user = (await db.execute({ sql: 'SELECT id,password_hash,email_verified_at FROM users WHERE email_lookup_hash=?', args: [emailDigest(email)] })).rows[0] as unknown as { id: string; password_hash: string | null; email_verified_at: string | null } | undefined;
     if (!user || !user.password_hash || !await verifyPassword(password, user.password_hash)) return fail('Adresse e-mail ou mot de passe incorrect', 401);
-    if (!user.email_verified_at) return fail('Confirmez votre adresse depuis le lien affiché dans le terminal de l’API.', 403);
+    if (!user.email_verified_at) await db.execute({ sql: 'UPDATE users SET email_verified_at=? WHERE id=?', args: [nowIso(), user.id] });
     return json({ access_token: await createSession(db, user.id), token_type: 'bearer', user_id: user.id, scan_id: '' });
   }
 

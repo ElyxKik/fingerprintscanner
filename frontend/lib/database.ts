@@ -5,7 +5,11 @@ const globalForDb = globalThis as typeof globalThis & { fingerprintDb?: Client; 
 
 function getClient(): Client {
   if (globalForDb.fingerprintDb) return globalForDb.fingerprintDb;
-  const url = process.env.TURSO_DATABASE_URL || `file:${join(process.cwd(), 'data', 'fingerprintscanner.db')}`;
+  const useTurso = process.env.NODE_ENV === 'production' || process.env.USE_TURSO_IN_DEVELOPMENT === 'true';
+  if (useTurso && process.env.USE_TURSO_IN_DEVELOPMENT === 'true' && !process.env.TURSO_DATABASE_URL) {
+    throw new Error('Configure TURSO_DATABASE_URL to use Turso in local development.');
+  }
+  const url = (useTurso ? process.env.TURSO_DATABASE_URL : undefined) || `file:${join(process.cwd(), 'data', 'fingerprintscanner.db')}`;
   const isRemote = url.startsWith('libsql://') || url.startsWith('https://');
   if (process.env.NODE_ENV === 'production' && !isRemote) {
     throw new Error('Configure the persistent remote Turso database for production.');
