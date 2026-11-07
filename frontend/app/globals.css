@@ -137,6 +137,9 @@ body{font-size:16px;line-height:1.55}
 .scan-plan-card .button{min-height:44px;margin-top:auto}
 .scan-plan-card small{padding-top:2px}
 .scan-offer-actions>.scan-pricing-link{grid-column:1/-1;margin-top:2px}
+.scan-target-email{display:flex;flex-direction:column;gap:5px;margin-bottom:17px;padding:16px 20px;border:1px solid #bfdbfe;border-left:5px solid #2563eb;border-radius:11px;background:#eff6ff}
+.scan-target-email span{color:#2563eb;font-size:11px;font-weight:800;letter-spacing:.08em}
+.scan-target-email strong{color:#102a56;font-size:clamp(20px,3vw,28px);font-weight:800;line-height:1.25;overflow-wrap:anywhere}
 @media(max-width:600px){.scan-offer-actions{grid-template-columns:1fr;padding:14px}.scan-offer-actions .scan-offer-intro,.scan-offer-actions>.scan-pricing-link{grid-column:1}.scan-plan-card{padding:15px}}
 .results-lock-card b{font-size:15px}
 .results-lock-card p{font-size:13px;line-height:1.5}
