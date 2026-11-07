@@ -210,3 +210,12 @@ body{font-size:16px;line-height:1.55}
 .payment-return-note svg{flex:none;color:#2563eb;margin-top:1px}
 .brand-image-link{display:inline-flex;width:239px;height:40px;align-items:center;flex:none}
 .brand-image-link img{display:block;width:100%;height:auto}
+
+/* Put the scan itself first and let its panel span the full page width. */
+.dedicated-scan-shell>.container{display:flex;flex-direction:column;gap:30px}
+.dedicated-scan-content{display:contents}
+.dedicated-scan-panel{order:0;width:100%;min-height:0;padding:clamp(24px,4vw,40px);border-radius:16px}
+.dedicated-scan-panel form{width:100%}
+.dedicated-scan-top{order:1;width:100%;grid-template-columns:1.1fr .9fr;min-height:260px;padding-top:28px;border-top:1px solid rgba(189,208,241,.17)}
+.dedicated-scan-explainer{order:2;width:100%;padding-top:26px;border-top:1px solid rgba(189,208,241,.17)}
+@media(max-width:760px){.dedicated-scan-shell>.container{gap:24px}.dedicated-scan-panel{padding:22px 19px}.dedicated-scan-top{grid-template-columns:1fr;min-height:0;padding-top:24px}.dedicated-scan-explainer{padding-top:22px}}
