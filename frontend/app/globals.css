@@ -210,6 +210,12 @@ body{font-size:16px;line-height:1.55}
 .payment-return-note svg{flex:none;color:#2563eb;margin-top:1px}
 .brand-image-link{display:inline-flex;width:239px;height:40px;align-items:center;flex:none}
 .brand-image-link img{display:block;width:100%;height:auto}
+.sensitive-demo-warning{margin:0 0 16px;padding:18px 20px;border:1px solid #bfdbfe;border-left:4px solid #2563eb;border-radius:10px;background:#eff6ff;color:#1e3a5f;font-size:14px;line-height:1.65}
+.sensitive-demo-warning strong{display:block;color:#1d4ed8;font-size:13px;letter-spacing:.04em}
+.sensitive-demo-warning p{margin:8px 0 12px}
+.sensitive-demo-warning>div{display:flex;flex-wrap:wrap;gap:16px}
+.sensitive-demo-warning a{color:#1d4ed8;font-weight:700;text-decoration:underline;text-underline-offset:2px}
+@media(max-width:600px){.sensitive-demo-warning{padding:15px;font-size:13px}.sensitive-demo-warning>div{gap:10px 14px}}
 
 /* Put the scan itself first and let its panel span the full page width. */
 .dedicated-scan-shell>.container{display:flex;flex-direction:column;gap:30px}
